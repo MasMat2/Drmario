@@ -124,7 +124,7 @@ def do_polygon_demo(surface, counter):
                 radius = 100
                 if i % 2 == 0:
                         radius = radius // 2
-                ang = i * 3.14159 / num_points + counter * 3.14159 / 60
+                ang = i * math.pi / num_points + counter * math.pi / 60
                 x = center_x + int(math.cos(ang) * radius)
                 y = center_y + int(math.sin(ang) * radius)
                 point_list.append((x, y))
