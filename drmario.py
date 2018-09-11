@@ -10,34 +10,9 @@ ORANGE = (255, 176, 97)
 YELLOW = (238, 226, 0)
 COLORS = [BLUE,GREEN,YELLOW,PURPLE]
 
-# class iterator:
-#
-#     def cycle(iterable):
-#
-#         saved = []
-#
-#         for element in iterable:
-#             yield element
-#             saved.append(element)
-#
-#         while saved:
-#             for element in saved:
-#                 yield element
-
-
-# class Blocks:
-#
-#     def on_notify(self, subject, event):
-#         if event == "touch bottom":
-#             if subject  == theGame.player:
-#                 self.array.append((theGame.player.top_left))
-#                 self.array.append((theGame.playerrect_left + theGame.player.tail_left*theGame.width, self.rect_top + self.tail_top*self.height + self.height))
-
-class Physics:
-    pass
 class Player:
 
-    def __init__(self):
+    def __init__(self, window_size):
 
         self.speed = 24
 
@@ -45,15 +20,27 @@ class Player:
 
         self.width, self.height = 24, 24
 
-        self.window_width, self.window_height = pygame.display.get_surface().get_size()
+        self.window_width, self.window_height = window_size[0], window_size[0]
 
-        self.color = BLUE
-        self.color_tail = YELLOW
+        self.color = (int(random.random()*4), int(random.random()*4))
+        print(self.color)
 
         self.events = set()
 
-        self.tail_config = self.change_tail()
-        next(self.tail_config)
+        self.config = self.change_config()
+        next(self.config)
+
+                                            
+    def get_pos(self):
+        self.first_left = self.rect_left + self.rect_config[0][0] * self.width
+        self.first_top = self.rect_top + self.rect_config[0][1] * self.height
+        self.last_left = self.rect_left + self.rect_config[1][0] * self.width
+        self.last_top = self.rect_top + self.rect_config[1][1] * self.height
+
+        self.first = (self.first_left, self.first_top)
+        self.last = (self.last_left, self.last_top)
+
+        return (self.first, self.last)
 
     def update(self):
         for event in self.events:
@@ -70,45 +57,38 @@ class Player:
                 self.rect_left -= self.speed
 
             if event == pygame.K_SPACE:
-                next(self.tail_config)
+                next(self.config)
 
-        if self.rect_left < 0:
-            self.rect_left = 0
-        if self.rect_left > self.window_width - self.width:
-            self.rect_left = self.window_width - self.width
+        self.get_pos()
 
-        if self.rect_top < 0:
-            self.rect_top = 0
-        if self.rect_top > self.window_height - self.height:
-            self.rect_top = self.window_height - self.height
+        width_limit = self.window_width - self.width
+        height_limit = self.window_height - self.height
 
-        self.tail_pos = [self.rect_left + self.tail_configx*self.width, self.rect_top + self.tail_configy*self.height]
+        if self.first_left < 0 or self.last_left < 0:
+            self.rect_left += self.width
+        elif self.first_left > width_limit or self.last_left > width_limit:
+            self.rect_left -= self.width
 
-        if self.tail_pos[0] < 0:
-            self.tail_pos[0] = 0
-        elif self.tail_pos[0] > self.window_width - self.width:
-            self.tail_pos[0] = self.window_width - self.width
+        if self.first_top < 0 or self.last_top < 0:
+            self.rect_top += self.height
+        elif self.first_top > height_limit or self.last_top > height_limit:
+            self.rect_top -= self.height
 
-        elif self.tail_pos[1] < 0:
-            self.tail_pos[1] = 0
-        if self.tail_pos[1] > self.window_height - self.height:
-            self.tail_pos[1] = self.window_height - self.height
-
-        self.rect_left, self.rect_top = self.tail_pos[0] - self.tail_configx*self.width, self.tail_pos[1] - self.tail_configy*self.height
+        self.get_pos()
 
         self.events = set()
 
-    def change_tail(self):
+    def change_config(self):
         while True:
             for i in range(4):
                 if  i == 0:  #'right'
-                    self.tail_configx, self.tail_configy = 1, 0
+                    self.rect_config = [(0,0),(1,0)]
                 elif i == 1:  #'down'
-                    self.tail_configx, self.tail_configy = 0, 1
+                    self.rect_config = [(0,0),(0,-1)]
                 elif i == 2:  #'left'
-                    self.tail_configx, self.tail_configy = -1, 0
+                    self.rect_config = [(1,0),(0,0)]
                 elif i == 3:  #'up'
-                    self.tail_configx, self.tail_configy = 0, -1
+                    self.rect_config = [(0,-1),(0,0)]
                 yield None
 
     def inside_block(self):
@@ -120,8 +100,8 @@ class Player:
             return False
 
     def draw(self):
-        pygame.draw.rect(theGame._display_surf, self.color, (self.rect_left, self.rect_top, self.width, self.height), 0)
-        pygame.draw.rect(theGame._display_surf, self.color_tail, (self.tail_pos[0], self.tail_pos[1], self.width, self.height), 0)
+        pygame.draw.rect(theGame._display_surf, COLORS[self.color[0]], (self.first_left, self.first_top, self.width, self.height), 0)
+        pygame.draw.rect(theGame._display_surf, COLORS[self.color[1]], (self.last_left, self.last_top, self.width, self.height), 0)
 
 class Game:
 
@@ -137,7 +117,7 @@ class Game:
         self._running = True
 
         # Player objects
-        self.player = Player()
+        self.player = Player(self.size)
 
     def on_event(self, event):
         if event.type == pygame.QUIT:

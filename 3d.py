@@ -30,6 +30,7 @@ def gen():
             yield (i*2 + 1)/4
 
 angles = gen()
+rot = True
 
 while 1:
     for event in pygame.event.get():
@@ -56,18 +57,26 @@ while 1:
 
         angle = next(angles)
         # Cos*hip(2**(1/2)) == ca = x
-        new_x = (2**(1/2))*math.cos((math.pi)* (angle+ (counter/120)))
+        new_x = (2**(1/2))*math.cos((math.pi)* (angle + (counter/60)))
 
         # Sin*hip(2**(1/2)) == co = z
-        new_z = (2**(1/2))*math.sin((math.pi)* (angle +(counter/120)))
+        new_z = (2**(1/2))*math.sin((math.pi)* (angle + (counter/60)))
 
-        new_x = int((new_x/(new_z+4))*80 + cx)
-        new_y = int((y/(new_z+4))*80 + cy)
+        new_x = int((new_x/(new_z+4))*160 + cx)
+        new_y = int((y/(new_z+4))*160 + cy)
         line_points.append((new_x, new_y))
 
 
     for start, end in connections:
         pygame.draw.line(surface, (0,0,0), line_points[start], line_points[end], 1)
 
-    counter += 1
+
+    if counter % (15) == -1:
+        rot = not rot
+    if rot:
+        counter += 1
+    else:
+        counter -= 1
+
+
     pygame.display.update()
