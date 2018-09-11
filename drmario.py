@@ -23,26 +23,13 @@ class Player:
         self.window_width, self.window_height = window_size[0], window_size[0]
 
         self.color = (int(random.random()*4), int(random.random()*4))
-        print(self.color)
 
         self.events = set()
 
         self.config = self.change_config()
-        next(self.config)
+        self.rect_config = next(self.config)
 
-                                            
-    def get_pos(self):
-        self.first_left = self.rect_left + self.rect_config[0][0] * self.width
-        self.first_top = self.rect_top + self.rect_config[0][1] * self.height
-        self.last_left = self.rect_left + self.rect_config[1][0] * self.width
-        self.last_top = self.rect_top + self.rect_config[1][1] * self.height
-
-        self.first = (self.first_left, self.first_top)
-        self.last = (self.last_left, self.last_top)
-
-        return (self.first, self.last)
-
-    def update(self):
+    def input_events(self):
         for event in self.events:
             if event == pygame.K_UP:
                 self.rect_top -= self.speed
@@ -57,47 +44,50 @@ class Player:
                 self.rect_left -= self.speed
 
             if event == pygame.K_SPACE:
-                next(self.config)
-
-        self.get_pos()
-
-        width_limit = self.window_width - self.width
-        height_limit = self.window_height - self.height
-
-        if self.first_left < 0 or self.last_left < 0:
-            self.rect_left += self.width
-        elif self.first_left > width_limit or self.last_left > width_limit:
-            self.rect_left -= self.width
-
-        if self.first_top < 0 or self.last_top < 0:
-            self.rect_top += self.height
-        elif self.first_top > height_limit or self.last_top > height_limit:
-            self.rect_top -= self.height
-
-        self.get_pos()
-
-        self.events = set()
+                self.rect_config = next(self.config)
 
     def change_config(self):
         while True:
-            for i in range(4):
-                if  i == 0:  #'right'
-                    self.rect_config = [(0,0),(1,0)]
-                elif i == 1:  #'down'
-                    self.rect_config = [(0,0),(0,-1)]
-                elif i == 2:  #'left'
-                    self.rect_config = [(1,0),(0,0)]
-                elif i == 3:  #'up'
-                    self.rect_config = [(0,-1),(0,0)]
-                yield None
+                yield [(0,0),(1,0)]
+                yield [(0,0),(0,-1)]
+                yield [(1,0),(0,0)]
+                yield [(0,-1),(0,0)]
 
-    def inside_block(self):
-        head = theGame._display_surface.get_at(self.rect_left, self.rect_top + self.height) != WHITE
-        tail = theGame._display_surface.get_at(self.tail_pos[0], self.tail_pos[1] + self.height) != WHITE
-        if head or tail:
-            return True
-        else:
-            return False
+    def get_pos(self):
+        self.first_left = self.rect_left + self.rect_config[0][0] * self.width
+        self.first_top = self.rect_top + self.rect_config[0][1] * self.height
+        self.last_left = self.rect_left + self.rect_config[1][0] * self.width
+        self.last_top = self.rect_top + self.rect_config[1][1] * self.height
+
+        self.first = (self.first_left, self.first_top)
+        self.last = (self.last_left, self.last_top)
+
+        return (self.first, self.last)
+
+
+    def correct_pos(self):
+            self.get_pos()
+
+            width_limit = self.window_width - self.width
+            height_limit = self.window_height - self.height
+
+            if self.first_left < 0 or self.last_left < 0:
+                self.rect_left += self.width
+            elif self.first_left > width_limit or self.last_left > width_limit:
+                self.rect_left -= self.width
+
+            if self.first_top < 0 or self.last_top < 0:
+                self.rect_top += self.height
+            elif self.first_top > height_limit or self.last_top > height_limit:
+                self.rect_top -= self.height
+
+            self.get_pos()
+
+            self.events = set()
+            
+    def update(self):
+        self.input_events()
+        self.correct_pos()
 
     def draw(self):
         pygame.draw.rect(theGame._display_surf, COLORS[self.color[0]], (self.first_left, self.first_top, self.width, self.height), 0)
