@@ -10,6 +10,28 @@ ORANGE = (255, 176, 97)
 YELLOW = (238, 226, 0)
 COLORS = [BLUE,GREEN,YELLOW,PURPLE]
 
+class Blocks:
+
+    def __init__(self, game, player):
+        self.blocks = []
+
+    def touch_player(self):
+        if player.window_height in (player.first_top, player.last_top):
+            return True
+        y = sorted(player.first_top, player.last_top)[0]
+        for x in player.first_left, player.last_left:
+            if theGame._display_surf.get_at((x,y)) in COLORS:
+                return True
+
+    def add_block(self):
+        self.block.append(list(player.first) + [player.color[0]])
+        self.blocks.append(list(player.last) + [player.color[0]])
+
+    def draw(self):
+        for block in self.blocks:
+            pygame.draw.rect(theGame._display_surf, block[-1], (block[0], block[1], player.width, player.height), 0)
+
+
 class Player:
 
     def __init__(self, window_size):
@@ -84,7 +106,7 @@ class Player:
             self.get_pos()
 
             self.events = set()
-            
+
     def update(self):
         self.input_events()
         self.correct_pos()
