@@ -1,4 +1,4 @@
-import pygame, random, sys, copy
+import pygame, random, sys, copy, time
 from pygame.locals import   *
 
 WHITE = (255,255,255)
@@ -12,24 +12,52 @@ COLORS = [BLUE,GREEN,YELLOW,PURPLE]
 
 class Blocks:
 
-    def __init__(self, game, player):
+    def __init__(self, player):
         self.blocks = []
+        self.player = player
+
+    def update(self):
+        self.delete_blocks()
+        self.add_block()
+
+
+    def delete_blocks(self):
+        count = 0
+        current_color = 0
+        for x in range(0, self.player.window_width, self.player.width):
+            for y in range(0, self.player.window_height, self.player.height):
+                color = theGame._display_surf.get_at((x,y))[:3]
+                if color == WHITE:
+                    count = 0
+                    current_color = 0
+                elif color != current_color:
+                    # if count > 3:
+                    #     for i in range(x, x-self.player.height*(count), -self.player.height):
+                    #         tarx = x - self.player.height
+                    current_color = color
+                    count = 1
+                else:
+                    count += 1
+
+
 
     def touch_player(self):
-        if player.window_height in (player.first_top, player.last_top):
+        if self.player.window_height - self.player.height in (self.player.first_top, self.player.last_top):
             return True
-        y = sorted(player.first_top, player.last_top)[0]
-        for x in player.first_left, player.last_left:
+        y = sorted([self.player.first_top, self.player.last_top])[-1] + self.player.height
+        for x in self.player.first_left, self.player.last_left:
             if theGame._display_surf.get_at((x,y)) in COLORS:
                 return True
 
     def add_block(self):
-        self.block.append(list(player.first) + [player.color[0]])
-        self.blocks.append(list(player.last) + [player.color[0]])
+        if self.touch_player():
+            self.blocks.append(list(self.player.first) + [self.player.color[0]])
+            self.blocks.append(list(self.player.last) + [self.player.color[1]])
+            self.player.on_init()
 
     def draw(self):
         for block in self.blocks:
-            pygame.draw.rect(theGame._display_surf, block[-1], (block[0], block[1], player.width, player.height), 0)
+            pygame.draw.rect(theGame._display_surf, COLORS[block[-1]], (block[0], block[1], self.player.width, self.player.height), 0)
 
 
 class Player:
@@ -38,31 +66,32 @@ class Player:
 
         self.speed = 24
 
-        self.rect_left, self.rect_top = 0, 0
-
         self.width, self.height = 24, 24
 
         self.window_width, self.window_height = window_size[0], window_size[0]
-
-        self.color = (int(random.random()*4), int(random.random()*4))
+        self.width_limit = self.window_width - self.width
+        self.height_limit = self.window_height - self.height
 
         self.events = set()
 
+        self.on_init()
+
+    def on_init(self):
+        self.rect_left, self.rect_top = 0, 0
+        self.color = (int(random.random()*4), int(random.random()*4))
         self.config = self.change_config()
         self.rect_config = next(self.config)
 
+
     def input_events(self):
         for event in self.events:
-            if event == pygame.K_UP:
-                self.rect_top -= self.speed
-
-            if event == pygame.K_DOWN:
+            if event == pygame.K_s or event == pygame.K_DOWN:
                 self.rect_top += self.speed
 
-            if event == pygame.K_RIGHT:
+            if event == pygame.K_d or event == pygame.K_RIGHT:
                 self.rect_left += self.speed
 
-            if event == pygame.K_LEFT:
+            if event == pygame.K_a or event == pygame.K_LEFT:
                 self.rect_left -= self.speed
 
             if event == pygame.K_SPACE:
@@ -84,23 +113,17 @@ class Player:
         self.first = (self.first_left, self.first_top)
         self.last = (self.last_left, self.last_top)
 
-        return (self.first, self.last)
-
-
     def correct_pos(self):
             self.get_pos()
 
-            width_limit = self.window_width - self.width
-            height_limit = self.window_height - self.height
-
             if self.first_left < 0 or self.last_left < 0:
                 self.rect_left += self.width
-            elif self.first_left > width_limit or self.last_left > width_limit:
+            elif self.first_left > self.width_limit or self.last_left > self.width_limit:
                 self.rect_left -= self.width
 
             if self.first_top < 0 or self.last_top < 0:
                 self.rect_top += self.height
-            elif self.first_top > height_limit or self.last_top > height_limit:
+            elif self.first_top > self.height_limit or self.last_top > self.height_limit:
                 self.rect_top -= self.height
 
             self.get_pos()
@@ -130,6 +153,7 @@ class Game:
 
         # Player objects
         self.player = Player(self.size)
+        self.blocks = Blocks(self.player)
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -141,10 +165,12 @@ class Game:
 
     def on_loop(self):
         self.player.update()
+        self.blocks.update()
 
     def on_render(self):
         self._display_surf.fill(WHITE)
         self.player.draw()
+        self.blocks.draw()
         pygame.display.update()
 
     def on_cleanup(self):
