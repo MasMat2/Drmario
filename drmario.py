@@ -10,6 +10,8 @@ ORANGE = (255, 176, 97)
 YELLOW = (238, 226, 0)
 COLORS = [BLUE,GREEN,YELLOW,PURPLE]
 
+
+
 class Blocks:
 
     def __init__(self, player):
