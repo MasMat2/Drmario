@@ -143,16 +143,19 @@ class Player(Subject):
     def touch_block(self, player_position):
         # a = pygame.draw.rect(self.surface, BLACK, (player_position[0][0], player_position[0][1], self.width, self.height), 0)
         # b = pygame.draw.rect(self.surface, BLACK, (player_position[1][0], player_position[1][1], self.width, self.height), 0)
-        # pygame.display.update(a)
-        # pygame.display.update(b)
 
         first, last = [(i[0], i[1] + self.height) for i in player_position]
-        try:
-            pos_to_check = [self.surface.get_at(first), self.surface.get_at(last)]
-        except IndexError:
-            return True
-        if [BLACK, BLACK] != pos_to_check:
-            return True
+        pos_to_check = [i for i in (first, last) if i not in player_position]
+
+        color_to_check = []
+        for i in pos_to_check:
+            try:
+                color_to_check.append(self.surface.get_at(i))
+            except IndexError:
+                return True
+        for pos_color in color_to_check:
+            if BLACK != pos_color:
+                return True
         return None
 
     def update(self):
