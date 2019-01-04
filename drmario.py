@@ -1,4 +1,4 @@
-import pygame, random, sys, copy
+import pygame, random, sys, copy, time
 from pygame.locals import   *
 
 WHITE = (255,255,255)
@@ -35,46 +35,45 @@ class Block(Observer):
         self.surface = surface
         self.blocks_dict= {}
 
-    def config(self):
-        # Directions in the plane (above, right, under, left)
-        while True:
-            yield [0,-1];yield [1,0]
-            yield [0,1];yield [-1,0]
-
-
     def tetris(self, player_status):
-        search_config = self.config()
+        up_right = ([1,0], [0,1])
 
-        # Loop through the head and tail of the current player block
         for i in player_status:
-            i = i[0]
-            init_color = self.surface.get_at(i)
+            init_color = self.surface.get_at(i[0])
 
-            # Check how many block have the same color in a row above, under and side ways of the current block
-            for j in range(4):
-                yielded = next(search_config)
-                new_block = list(i)
+            for side in up_right:
+                new_block = list(i[0])
                 new_block_color = init_color
-                streak = 0
 
-                while init_color == new_block_color:
-                    streak += 1
-                    new_block[0] += yielded[0] * 24
-                    new_block[1] += yielded[1] * 24
-
+                while True:
+                    new_block[0] += side[0] * 24
+                    new_block[1] += side[1] * 24
                     try:
                         new_block_color = self.surface.get_at(new_block)
                     except IndexError:
                         new_block_color = None
+                    if init_color != new_block_color:
+                        break
 
-                # Check if there are more of three block in the same color and delete them is True
+                streak = 0
+                new_block_color = init_color
+                while True:
+                    new_block[0] -= side[0] * 24
+                    new_block[1] -= side[1] * 24
+                    try:
+                        new_block_color = self.surface.get_at(new_block)
+                    except IndexError:
+                        new_block_color = None
+                    if init_color != new_block_color:
+                        break
+                    streak += 1
+
+
                 if streak > 3:
                     for loop in range(streak):
-                        new_block[0] -= yielded[0] * 24
-                        new_block[1] -= yielded[1] * 24
+                        new_block[0] += side[0] * 24
+                        new_block[1] += side[1] * 24
                         self.blocks_dict.pop(tuple(new_block), None)
-
-
 
 
     def notify(self, player_status):
