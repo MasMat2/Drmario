@@ -33,31 +33,68 @@ class Observer:
 class Block(Observer):
     def __init__(self, surface):
         self.surface = surface
+        self.blocks_dict= {}
 
-        self.blocks_array = []
-        self.used_square = []
+    def config(self):
+        # Directions in the plane (above, right, under, left)
+        while True:
+            yield [0,-1];yield [1,0]
+            yield [0,1];yield [-1,0]
 
-    def add_block(self, new_block):
-        self.block_array.append(new_block)
 
-    def remove_block(self, new_block):
-        self.block_array.remove(new_block)
+    def tetris(self, player_status):
+        search_config = self.config()
+
+        # Loop through the head and tail of the current player block
+        for i in player_status:
+            i = i[0]
+            init_color = self.surface.get_at(i)
+
+            # Check how many block have the same color in a row above, under and side ways of the current block
+            for j in range(4):
+                yielded = next(search_config)
+                new_block = list(i)
+                new_block_color = init_color
+                streak = 0
+
+                while init_color == new_block_color:
+                    streak += 1
+                    new_block[0] += yielded[0] * 24
+                    new_block[1] += yielded[1] * 24
+
+                    try:
+                        new_block_color = self.surface.get_at(new_block)
+                    except IndexError:
+                        new_block_color = None
+
+                # Check if there are more of three block in the same color and delete them is True
+                if streak > 3:
+                    for loop in range(streak):
+                        new_block[0] -= yielded[0] * 24
+                        new_block[1] -= yielded[1] * 24
+                        self.blocks_dict.pop(tuple(new_block), None)
+
+
+
 
     def notify(self, player_status):
-        first, last  = player_status[0]
-        fc, lc = player_status[1]
-        self.blocks_array.append((first, fc))
-        self.blocks_array.append((last, lc))
+        # Add player to the block dictionary and check if it has created a row or line with the same color
+        first, last = [(player_status[i][0], player_status[i][1]) for i in range(2)]
+        for pos_color in first, last:
+            self.blocks_dict[pos_color[0]] = pos_color[1]
+        self.tetris(player_status)
+
 
     def draw(self):
-        for block in self.blocks_array:
-            pygame.draw.rect(self.surface, COLORS[block[1]], (block[0][0], block[0][1], 24, 24), 0)
+        for block in self.blocks_dict:
+            color = self.blocks_dict[block]
+            pygame.draw.rect(self.surface, COLORS[color], (block[0], block[1], 24, 24), 0)
 
 
 
 class Player(Subject):
 
-    def __init__(self, surface, window_size, block):
+    def __init__(self, surface, block):
 
         super().__init__()
 
@@ -65,7 +102,6 @@ class Player(Subject):
 
         self.width, self.height = 24, 24
 
-        self.window_width, self.window_height = window_size[0], window_size[1]
         self.surface = surface
 
         self.events = set()
@@ -83,7 +119,7 @@ class Player(Subject):
         self.config = self.change_config()
         self.rect_config = next(self.config)
 
-        self.get_pos()
+        self.player_position = self.correct_pos()
 
 
     def input_events(self):
@@ -119,8 +155,8 @@ class Player(Subject):
     def correct_pos(self):
             self.get_pos()
 
-            width_limit = self.window_width - self.width
-            height_limit = self.window_height - self.height
+            width_limit = self.surface.get_width() - self.width
+            height_limit = self.surface.get_height() - self.height
 
             if self.first_left < 0 or self.last_left < 0:
                 self.rect_left += self.width
@@ -135,15 +171,9 @@ class Player(Subject):
             self.get_pos()
             self.events = set()
 
-            self.first = (self.first_left, self.first_top)
-            self.last = (self.last_left, self.last_top)
-
-            return(self.first, self.last)
+            return ((self.first_left, self.first_top), (self.last_left, self.last_top))
 
     def touch_block(self, player_position):
-        # a = pygame.draw.rect(self.surface, BLACK, (player_position[0][0], player_position[0][1], self.width, self.height), 0)
-        # b = pygame.draw.rect(self.surface, BLACK, (player_position[1][0], player_position[1][1], self.width, self.height), 0)
-
         first, last = [(i[0], i[1] + self.height) for i in player_position]
         pos_to_check = [i for i in (first, last) if i not in player_position]
 
@@ -159,13 +189,13 @@ class Player(Subject):
         return None
 
     def update(self):
-        self.input_events()
-        player_position = self.correct_pos()
-
-        if self.touch_block(player_position):
-            player_status = player_position, self.color
+        if self.touch_block(self.player_position):
+            player_status = [(self.player_position[i], self.color[i]) for i in range(2)]
             self.notify_observers(player_status)
             self.on_init()
+
+        self.input_events()
+        self.player_position = self.correct_pos()
 
 
     def draw(self):
@@ -187,7 +217,7 @@ class Game:
 
         # Player objects
         self.blocks = Block(self._display_surf)
-        self.player = Player(self._display_surf, self.size, self.blocks)
+        self.player = Player(self._display_surf, self.blocks)
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
