@@ -24,8 +24,7 @@ class blob:
                 except IndexError:
                     continue
 
-                cop = [i for i in colors]
-                colors[2] = 255 - (255*d)//self.r
+                colors[0] = 255 - (255*d)//self.r
                 for index in range(len(colors)):
                     if colors[index] > 255:
                         colors[index] = 255
@@ -70,7 +69,7 @@ class main:
         if self.selected: self.selected.mw, self.selected.mh = pygame.mouse.get_pos()
 
     def on_render(self):
-        self._display_surf.fill((0, 0, 0))
+        self._display_surf.fill((255, 255, 0))
         for blob in self.blobs:
             blob.draw()
         pygame.display.flip()
