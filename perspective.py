@@ -5,58 +5,32 @@ class Animation:
     def __init__(self, surface):
         self.points = []
         self.surface = surface
-        self.width, self.height = [i/2 for i in self.surface.get_size()]
+        self.width, self.height = [i//2 for i in self.surface.get_size()]
         self.clock = pygame.time.Clock()
         self.counter = 0
         self.period = 5
         self.speed = self.period*60
+        self.f = 0
         self.pos = [
-        [1,-1,1],
-        [-1,-1,1],
-        [-1,-1,-1],
-        [1,-1,-1],
-        [1,1,1],
-        [-1,1,1],
-        [-1,1,-1],
-        [1,1,-1],
+        [0,0,-1],
+        [0,0,1]
         ]
-        #xyz
 
         self.join = [
-        [0,1],
-        [1,2],
-        [2,3],
-        [3,0],
-        [4,5],
-        [5,6],
-        [6,7],
-        [7,4],
-        [0,4],
-        [1,5],
-        [2,6],
-        [3,7],
+        [0,1]
         ]
 
+        self.xmove = 0
+
     def draw(self):
-        self.points = []
+        # angle = math.atan(2/(2-(i[2])))
         for i in self.pos:
-            angle = 2*self.counter*math.pi/self.speed
-            z = math.cos(angle)*i[2] + math.sin(angle)*i[0]
+            z = i[2]
+            xa = self.xmove/(2-(i[2]))
+            x = int(self.width + 200*xa/(3+z))
             y = int(self.width + 200*i[1]/(3+z))
-            xz = math.cos(angle)*i[0] - math.sin(angle)*i[2]
-            x = int(self.width + 200*xz/(3+z))
-            self.points.append((x, y))
-
-        for j in self.join:
-            pygame.draw.line(self.surface, (255,255,255), self.points[j[0]], self.points[j[1]])
-        if self.counter == self.speed:
-            self.counter = 0
-        self.counter +=1
-
-    def update(self):
-        self.clock.tick(60)
-
-
+            self.surface.set_at((x, y), (255,255,255))
+        self.xmove += 0.001
 
 class main:
 
@@ -76,7 +50,7 @@ class main:
             self._running = False
 
     def on_loop(self):
-        self.animation.update()
+        pass
 
     def on_render(self):
         self._display_surf.fill((0,0,0))
