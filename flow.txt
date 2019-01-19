@@ -1,0 +1,13 @@
+
+
+
+move
+  check if outside screen
+  check if inside block
+    correct
+if touch block
+  add block
+  init()
+
+draw player
+draw block
