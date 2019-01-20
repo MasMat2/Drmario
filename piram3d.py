@@ -4,6 +4,7 @@ class Animation:
     def __init__(self, surface):
         # Import pygame display surface and its width and height
         self.surface = surface
+        self.width, self.height = [i//2for i in self.surface.get_size()]
 
         # Set the clock to keep a frame rate of 60 hertz
         self.clock = pygame.time.Clock()
@@ -24,81 +25,67 @@ class Animation:
         self.left, self.right, self.up, self.down, self.rot_right, self.rot_left, self.rot_up, self.rot_down= [False for i in range(8)]
 
         # Cubes coordinates x, y, z
-        root3 = 1/(3**0.5)
         self.pos = [
-        [0,-1,0],
-        [root3,root3,root3],
-        [root3,root3,-root3],
-        [-root3,root3,-root3],
-        [-root3,root3,root3]
+        [1,-1,1],
+        [1,-1,-1],
+        [-1,-1,-1],
+        [-1,-1,1],
+        [1,1,1],
+        [1,1,-1],
+        [-1,1,-1],
+        [-1,1,1]
         ]
         # Tell the program how to link each coordinate, this list is created based on self.pos
         self.join = [
-        [0,1], [0,2], [0,3], [0,4],
-        [1,2], [2,3], [3,4], [4,1]
+        [0,1], [1,2], [2,3], [3,0],
+        [4,5], [5,6], [6,7], [7,4],
+        [0,4], [1,5], [2,6], [3,7]
         ]
 
         self.faces = {
-        (0,1,2): (87, 199, 208),
-        (0,2,3): (150, 253, 109),
-        (0,3,4): (203, 103, 211),
-        (0,4,1): (238, 226, 0),
-        (1,2,3,4): (0, 0, 238)
+        (0,1,2,3): (0, 255, 255),
+        (4,5,6,7): (255, 0, 255),
+        (0,1,5,4): (255, 255, 0),
+        (1,2,6,5): (0, 255, 0),
+        (2,3,7,6): (0, 0, 255),
+        (3,0,4,7): (255, 0, 0)
         }
 
     def input_events(self):
         for event in self.events:
-            if event[0] == pygame.KEYDOWN:
-                if event[1] == pygame.K_a:
-                    self.left = True
-                if event[1] == pygame.K_w:
-                    self.up = True
-                if event[1] == pygame.K_d:
-                    self.right = True
-                if event[1] == pygame.K_s:
-                    self.down = True
-                if event[1] == pygame.K_RIGHT:
-                    self.rot_right = True
-                if event[1] == pygame.K_LEFT:
-                    self.rot_left = True
-                if event[1] == pygame.K_UP:
-                    self.rot_up = True
-                if event[1] == pygame.K_DOWN:
-                    self.rot_down = True
+            if event[1] == pygame.K_a:
+                self.left = not self.left
+            if event[1] == pygame.K_w:
+                self.up = not self.up
+            if event[1] == pygame.K_d:
+                self.right = not self.right
+            if event[1] == pygame.K_s:
+                self.down = not self.down
+            if event[1] == pygame.K_RIGHT:
+                self.rot_right = not self.rot_right
+            if event[1] == pygame.K_LEFT:
+                self.rot_left = not self.rot_left
+            if event[1] == pygame.K_UP:
+                self.rot_up = not self.rot_up
+            if event[1] == pygame.K_DOWN:
+                self.rot_down = not self.rot_down
 
-            if event[0] == pygame.KEYUP:
-                if event[1] == pygame.K_a:
-                    self.left = False
-                if event[1] == pygame.K_w:
-                    self.up = False
-                if event[1] == pygame.K_d:
-                    self.right = False
-                if event[1] == pygame.K_s:
-                    self.down = False
-                if event[1] == pygame.K_RIGHT:
-                    self.rot_right = False
-                if event[1] == pygame.K_LEFT:
-                    self.rot_left = False
-                if event[1] == pygame.K_UP:
-                    self.rot_up = False
-                if event[1] == pygame.K_DOWN:
-                    self.rot_down = False
         self.events = set()
 
     def move_cam(self):
         self.input_events()
         if self.left:
             self.cam[0] -= 2
-        if self.up:
-            self.cam[1] -= 2
         if self.right:
             self.cam[0] += 2
+        if self.up:
+            self.cam[1] -= 2
         if self.down:
             self.cam[1] += 2
+        if self.rot_left:
+            self.counterx -= 1
         if self.rot_right:
             self.counterx+= 1
-        if self.rot_left:
-            self.counterx-= 1
         if self.rot_up:
             self.countery -= 1
         if self.rot_down:
@@ -132,33 +119,76 @@ class Animation:
             points.append((x, y, z))
         return points
 
+    def get_xy(self, x, y, z):
+        zero_z = 500
+
+        planex = self.width + 400*x/(z + zero_z)
+        planey = self.height + 400*y/(z + zero_z)
+
+        return (planex, planey)
+
+    def get_2d(self, cord_3d):
+        points = []
+        for cord in cord_3d:
+            x, y = self.get_xy(cord[0], cord[1], cord[2])
+            points.append((x,y))
+        return points
+
     def update(self):
         self.clock.tick(60)
 
         self.move_cam()
 
-        self.points = self.get_xyz()
+        self.cord_3d = self.get_xyz()
+
+        self.points = self.get_2d(self.cord_3d)
 
     def draw_polygons(self):
-        face_hire = {}
-        for face in self.faces.keys():
-            z = 0
-            for point in face:
-                z += self.points[point][2]
-            face_hire[z] = face
+        depth_dict = {}
+        for cord in self.cord_3d:
+            depth_dict[cord[2]] = cord
 
-        depths = list(face_hire.keys())
-        depths.sort()
-        depths.reverse()
-        for face in depths:
-            f = [self.points[point][:2] for point in face_hire[face]]
-            pygame.draw.polygon(self.surface, self.faces[face_hire[face]], f)
+        sort_cord = list(depth_dict.keys())
+        sort_cord.sort()
+        closest_point = self.cord_3d.index(depth_dict[sort_cord[0]])
+
+        selected_faces = {}
+        for face in self.faces:
+            if closest_point in face:
+                f = [self.points[i] for i in face]
+                z = sum([self.cord_3d[i][2] for i in face])
+                selected_faces[z] = [f, self.faces[face]]
+        sort_cord = list(selected_faces.keys())
+        sort_cord.sort()
+        sort_cord.reverse()
+        for face in sort_cord:
+            pygame.draw.polygon(self.surface, selected_faces[face][1], selected_faces[face][0])
+
+
+        # sort_cord = []
+        # for key in sorted(depth_dict.iterkeys()):
+        #     sort_cord.append([key,depth_dict[key]])
+        # sort_cord.reverse()
+        # closest_point = self.cord_3d.index(sort_cord[0][1])
+
+        # selected_faces = {}
+        # for face in self.faces:
+        #     if closest_point in face:
+        #         f = [self.points[i] for i in face]
+        #         z = sum([self.cord_3d[i][2] for i in face])
+        #         selected_faces[z] = [f, self.faces[face]]
+        # sort_cord = list(selected_faces.keys())
+        # sort_cord.sort()
+        # sort_cord.reverse()
+        # for face in sort_cord:
+        #     pygame.draw.polygon(self.surface, selected_faces[face][1], selected_faces[face][0])
+
+
 
     def draw(self):
-        # self.draw_polygons()
+        self.draw_polygons()
         for j in self.join:
-
-            pygame.draw.line(self.surface, (255,255,255), self.points[j[0]][:2], self.points[j[1]][:2])
+            pygame.draw.line(self.surface, (255,255,255), self.points[j[0]], self.points[j[1]])
 
 class Main:
 
@@ -203,5 +233,6 @@ class Main:
             self.on_render()
         self.on_cleanup()
 
-theApp = Main()
-theApp.on_execute()
+if __name__ == "__main__":
+    theApp = Main()
+    theApp.on_execute()

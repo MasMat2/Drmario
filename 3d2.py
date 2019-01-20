@@ -41,10 +41,21 @@ class Animation:
         self.points = []
         for i in self.pos:
             angle = 2*self.counter*math.pi/self.speed
-            z = math.cos(angle)*i[2] + math.sin(angle)*i[0]
-            y = int(self.width + 200*i[1]/(3+z))
-            xz = math.cos(angle)*i[0] - math.sin(angle)*i[2]
-            x = int(self.width + 200*xz/(3+z))
+            # z = math.cos(angle)*i[2] + math.sin(angle)*i[0]
+            # y = int(self.width + 200*i[1]/(3+z))
+            # xz = math.cos(angle)*i[0] - math.sin(angle)*i[2]
+            # x = int(self.width + 200*xz/(3+z))
+
+            x = (math.cos(angle)*i[0] - math.sin(angle)*i[2])
+            z = (math.cos(angle)*i[2] + math.sin(angle)*i[0])
+
+            y = (math.cos(0)*i[1] - math.sin(0)*z)
+            z = (math.cos(0)*z + math.sin(0)*i[1])
+
+
+            x = 200 + 50*x
+            y = 200 + 50*y
+            z = 200 + 50*z
             self.points.append((x, y))
 
         for j in self.join:
