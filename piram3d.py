@@ -120,10 +120,13 @@ class Animation:
         return points
 
     def get_xy(self, x, y, z):
-        zero_z = 500
+        m_side = 10
+        m_deep = 30
+        a = self.width/(m_side/m_deep)
+        zero_z = 50/((1/3)/3) + 50
 
-        planex = self.width + 400*x/(z + zero_z)
-        planey = self.height + 400*y/(z + zero_z)
+        planex = self.width + a*x/(z + zero_z)
+        planey = self.height + a*y/(z + zero_z)
 
         return (planex, planey)
 
