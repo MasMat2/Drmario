@@ -11,6 +11,7 @@ YELLOW = (238, 226, 0)
 COLORS = [BLUE,GREEN,YELLOW,PURPLE]
 
 
+
 class Subject:
 
     def __init__(self):
@@ -36,44 +37,77 @@ class Block(Observer):
         self.blocks_dict= {}
 
     def tetris(self, player_status):
+        # For the tail and head of the player object check if a line was created
+        def find_streak(dire):
+            # Check if a row with same block colors was created after placing the player
+            # This will got to the last block with the same color in a line (dire=1)
+            # and reverse (dire=-1) to take into account the blocks on both sides
+            new_block_color = init_color
+            streak = 0
+            while True:
+                new_block[0] += (direction[0] * 24)*dire
+                new_block[1] += (direction[1] * 24)*dire
+                try:
+                    new_block_color = self.surface.get_at(new_block)
+                except IndexError:
+                    new_block_color = None
+                if init_color != new_block_color:
+                    break
+                streak += 1
+
+            return streak
+
+        def delete_blocks():
+            if streak > 3:
+                for loop in range(streak):
+                    new_block[0] += direction[0] * 24
+                    new_block[1] += direction[1] * 24
+                    if new_block not in ghost_block: ghost_block.append(new_block[:])
+                    self.blocks_dict.pop(tuple(new_block), None)
+
+        def is_floating(block):
+            comp_points = [(0,-1),(1,0),(0,1),(-1,0)]
+            for point in comp_points:
+                lonely_block = block
+                lonely_block[0] += 24*point[0]
+                lonely_block[1] += 24*point[1]
+                if tuple(lonely_block) in self.blocks_dict:
+                    if block == cur_gblock:
+                        print(f"one next to ghost {lonely_block}")
+                        return 1#is_floating(lonely_block)
+                    else:
+                        return None
+            if block == cur_gblock:
+                print(f"Nothing next to ghost {block}")
+                return None
+            else:
+                return block
+
         up_right = ([1,0], [0,1])
+        ghost_block = []
+        for slice in player_status:
+            init_color = self.surface.get_at(slice[0])
 
-        for i in player_status:
-            init_color = self.surface.get_at(i[0])
+            for direction in up_right:
+                new_block = list(slice[0])
+                find_streak(1)
+                streak = find_streak(-1)
 
-            for side in up_right:
-                new_block = list(i[0])
-                new_block_color = init_color
-
-                while True:
-                    new_block[0] += side[0] * 24
-                    new_block[1] += side[1] * 24
-                    try:
-                        new_block_color = self.surface.get_at(new_block)
-                    except IndexError:
-                        new_block_color = None
-                    if init_color != new_block_color:
-                        break
-
-                streak = 0
-                new_block_color = init_color
-                while True:
-                    new_block[0] -= side[0] * 24
-                    new_block[1] -= side[1] * 24
-                    try:
-                        new_block_color = self.surface.get_at(new_block)
-                    except IndexError:
-                        new_block_color = None
-                    if init_color != new_block_color:
-                        break
-                    streak += 1
+                # Delete the lines formed and return list of deleted blocks
+                delete_blocks()
+                print(ghost_block)
+                floating_blocks = []
+                for cur_gblock in ghost_block:
+                    float_block = is_floating(cur_gblock)
+                    if float_block:
+                        floating_blocks.append(float_block)
 
 
-                if streak > 3:
-                    for loop in range(streak):
-                        new_block[0] += side[0] * 24
-                        new_block[1] += side[1] * 24
-                        self.blocks_dict.pop(tuple(new_block), None)
+
+
+
+
+
 
 
     def notify(self, player_status):
@@ -88,7 +122,6 @@ class Block(Observer):
         for block in self.blocks_dict:
             color = self.blocks_dict[block]
             pygame.draw.rect(self.surface, COLORS[color], (block[0], block[1], 24, 24), 0)
-
 
 
 class Player(Subject):
@@ -126,16 +159,16 @@ class Player(Subject):
             if event == pygame.K_UP:
                 self.rect_top -= self.speed
 
-            if event in (pygame.K_DOWN, pygame.K_s, pygame.K_x):
+            if event in (pygame.K_DOWN, pygame.K_s, pygame.K_x, pygame.K_k):
                 self.rect_top += self.speed
 
-            if event == pygame.K_RIGHT:
+            if event in (pygame.K_RIGHT, pygame.K_d, pygame.K_l):
                 self.rect_left += self.speed
 
-            if event == pygame.K_LEFT:
+            if event in (pygame.K_LEFT, pygame.K_a, pygame.K_j):
                 self.rect_left -= self.speed
 
-            if event == pygame.K_SPACE:
+            if event in (pygame.K_SPACE, 0):
                 self.rect_config = next(self.config)
 
     def change_config(self):
