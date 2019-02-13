@@ -115,7 +115,7 @@ class Block(Observer):
 
 class Player(Observer):
 
-    def __init__(self, surface, block):
+    def __init__(self, surface, clock):
 
         super().__init__()
 
@@ -125,9 +125,7 @@ class Player(Observer):
 
         self.surface = surface
 
-        self.blocks = block
-
-        self.register_observer(self.blocks)
+        self.clock = clock
 
         self.on_init()
 
@@ -149,6 +147,7 @@ class Player(Observer):
 
             if event in (pygame.K_DOWN, pygame.K_s, pygame.K_x, pygame.K_k):
                 self.rect_top += self.speed
+                self.clock = pygame.time.get_ticks()
 
             if event in (pygame.K_RIGHT, pygame.K_d, pygame.K_l):
                 self.rect_left += self.speed
@@ -158,6 +157,9 @@ class Player(Observer):
 
             if event in (pygame.K_SPACE, 0):
                 self.rect_config = next(self.config)
+        if pygame.time.get_ticks()-self.clock > 1000:
+            self.rect_top += self.speed
+            self.clock = pygame.time.get_ticks()
 
     def change_config(self):
         while True:
@@ -234,10 +236,11 @@ class Game:
         pygame.init()
         self._display_surf = pygame.display.set_mode(self.size, 0, 32)
         self._running = True
+        self.clock = pygame.time.get_ticks()
 
         # Player objects
         self.blocks = Block(self._display_surf)
-        self.player = Player(self._display_surf, self.blocks)
+        self.player = Player(self._display_surf, self.clock)
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
