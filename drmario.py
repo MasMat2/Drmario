@@ -12,7 +12,7 @@ COLORS = [BLUE,GREEN,YELLOW,PURPLE]
 
 
 
-class Subject:
+class Observer:
 
     def __init__(self):
         self.observers = []
@@ -25,16 +25,15 @@ class Subject:
 
     def notify_observers(self, player_status):
         for observer in self.observers:
-            observer.notify(player_status)
-
-class Observer:
-    def notify():
+            observer.on_notify(player_status)
+    def on_notify():
         pass
 
 class Block(Observer):
     def __init__(self, surface):
         self.surface = surface
-        self.blocks_dict= {}
+        self.blocks_dict = {}
+        self.floating_blocks = None
 
     def tetris(self, player_status):
         # For the tail and head of the player object check if a line was created
@@ -68,22 +67,20 @@ class Block(Observer):
         def is_floating(block):
             comp_points = [(0,-1),(1,0),(0,1),(-1,0)]
             for point in comp_points:
-                lonely_block = block
+                lonely_block = block[:]
                 lonely_block[0] += 24*point[0]
                 lonely_block[1] += 24*point[1]
                 if tuple(lonely_block) in self.blocks_dict:
                     if block == cur_gblock:
-                        print(f"one next to ghost {lonely_block}")
-                        return 1#is_floating(lonely_block)
+                        return is_floating(lonely_block)
                     else:
                         return None
             if block == cur_gblock:
-                print(f"Nothing next to ghost {block}")
                 return None
             else:
                 return block
 
-        up_right = ([1,0], [0,1])
+        up_right = ([0,-1], [1,0])
         ghost_block = []
         for slice in player_status:
             init_color = self.surface.get_at(slice[0])
@@ -95,27 +92,20 @@ class Block(Observer):
 
                 # Delete the lines formed and return list of deleted blocks
                 delete_blocks()
-                print(ghost_block)
                 floating_blocks = []
                 for cur_gblock in ghost_block:
                     float_block = is_floating(cur_gblock)
                     if float_block:
                         floating_blocks.append(float_block)
+        return floating_blocks
 
 
-
-
-
-
-
-
-
-    def notify(self, player_status):
+    def on_notify(self, player_status):
         # Add player to the block dictionary and check if it has created a row or line with the same color
         first, last = [(player_status[i][0], player_status[i][1]) for i in range(2)]
         for pos_color in first, last:
             self.blocks_dict[pos_color[0]] = pos_color[1]
-        self.tetris(player_status)
+        self.floating_blocks = self.tetris(player_status)
 
 
     def draw(self):
@@ -123,8 +113,7 @@ class Block(Observer):
             color = self.blocks_dict[block]
             pygame.draw.rect(self.surface, COLORS[color], (block[0], block[1], 24, 24), 0)
 
-
-class Player(Subject):
+class Player(Observer):
 
     def __init__(self, surface, block):
 
@@ -135,8 +124,6 @@ class Player(Subject):
         self.width, self.height = 24, 24
 
         self.surface = surface
-
-        self.events = set()
 
         self.blocks = block
 
@@ -151,6 +138,7 @@ class Player(Subject):
         self.config = self.change_config()
         self.rect_config = next(self.config)
 
+        self.events = set()
         self.player_position = self.correct_pos()
 
 
