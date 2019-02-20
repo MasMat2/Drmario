@@ -31,6 +31,8 @@ class Observer:
 
 class Block(Observer):
     def __init__(self, surface):
+        super().__init__()
+        
         self.surface = surface
         self.blocks_dict = {}
         self.floating_blocks = None
@@ -115,7 +117,7 @@ class Block(Observer):
 
 class Player(Observer):
 
-    def __init__(self, surface, clock):
+    def __init__(self, surface):
 
         super().__init__()
 
@@ -125,7 +127,7 @@ class Player(Observer):
 
         self.surface = surface
 
-        self.clock = clock
+        self.clock = pygame.time.get_ticks()
 
         self.on_init()
 
@@ -236,11 +238,12 @@ class Game:
         pygame.init()
         self._display_surf = pygame.display.set_mode(self.size, 0, 32)
         self._running = True
-        self.clock = pygame.time.get_ticks()
 
         # Player objects
         self.blocks = Block(self._display_surf)
-        self.player = Player(self._display_surf, self.clock)
+        self.player = Player(self._display_surf)
+        self.blocks.register_observer(self.player)
+        self.player.register_observer(self.blocks)
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
