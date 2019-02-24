@@ -95,7 +95,6 @@ class Figure():
         # Cubes coordinates x, y, z
         self.pos = figure.pos
         # Tell the program how to link each coordinate, this list is created based on self.pos
-        self.join = figure.join
         self.faces = figure.faces
         self.colors = figure.colors
 
@@ -119,8 +118,26 @@ class Figure():
             points.append((x, y, z))
         return points
 
+    def get_face_vertex(self):
+        face_list = ()
+        for face in self.faces:
+            for index in face:
+                face_list += tuple(self.cord_3d[index])
+        return face_list
+
+    def get_face_vertex(self):
+        face_tuple = ()
+        for face in self.faces:
+            face_vertex = []
+            for index in face:
+                face_vertex.append(tuple(self.cord_3d[index]))
+            face_tuple += (tuple(face_vertex)),
+        return face_tuple
+
+
     def update(self):
         self.cord_3d = self.get_xyz()
+        self.face_point_list = self.get_face_vertex()
         self.cord_2d = self.physics.get_2d(self.cord_3d)
 
     def draw_polygons(self):
@@ -161,10 +178,19 @@ class Animation():
 
     def draw_all(self):
         face_color = []
-        face_list = [figure.cord_2d[point] for figure in self.figures for i in range(len(figure.faces)) for point in figure.faces[i]]
-        point_list = sorted([point for figure in self.figures for point in figure.cord_3d])
-        point_list = sorted(point_list, key=operator.itemgetter(2))
-        print(point_list)
+        face_list = ()
+        for figure in self.figures: face_list += (tuple(figure.face_point_list))
+        point_list = sorted([point for figure in self.figures for point in figure.cord_3d], key=operator.itemgetter(2))
+
+        # face_dict = {}
+        # for point in point_list:
+        #     face_dict[point] = []
+        #     # looop tru faces
+        #     for face in face_list:
+        #     # if face has point
+        #
+        #     #     face_dict[point].append(face3dcord)
+        print(face_list)
 
 
 
