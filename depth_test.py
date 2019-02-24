@@ -1,4 +1,4 @@
-import pygame, sys, math, time
+import pygame, sys, math, time, operator
 from figures import *
 
 class Physics():
@@ -141,21 +141,32 @@ class Animation():
         for figure in self.figures:
             figure.update()
 
+    # def draw_all(self):
+    #     face_color = []
+    #     depths = []
+    #     face_list = []
+    #     point_list = []
+    #     for figure in self.figures:
+    #         for i in range(len(figure.faces)):
+    #             point_list.append((point) for point in figure.faces[i])
+    #             face_list.append([figure.cord_2d[point] for point in figure.faces[i]])
+    #             face_color.append(figure.colors[i])
+    #             depths.append([sum([figure.cord_3d[point][2]*abs(figure.cord_3d[point][2])  for point in figure.faces[i]])])
+    #     ordered = depths[:]
+    #     ordered.sort()
+    #     ordered.reverse()
+    #     for i in ordered:
+    #         p = depths.index(i)
+    #         pygame.draw.polygon(self.surface, face_color[p], face_list[p])]
+
     def draw_all(self):
         face_color = []
-        depths = []
-        face_list = []
-        for figure in self.figures:
-            for i in range(len(figure.faces)):
-                face_list.append([figure.cord_2d[point] for point in figure.faces[i]])
-                face_color.append(figure.colors[i])
-                depths.append([sum([figure.cord_3d[point][2]**3  for point in figure.faces[i]])])
-        ordered = depths[:]
-        ordered.sort()
-        ordered.reverse()
-        for i in ordered:
-            p = depths.index(i)
-            pygame.draw.polygon(self.surface, face_color[p], face_list[p])
+        face_list = [figure.cord_2d[point] for figure in self.figures for i in range(len(figure.faces)) for point in figure.faces[i]]
+        point_list = sorted([point for figure in self.figures for point in figure.cord_3d])
+        point_list = sorted(point_list, key=operator.itemgetter(2))
+        print(point_list)
+
+
 
 class Main:
 
