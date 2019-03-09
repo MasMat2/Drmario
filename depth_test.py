@@ -102,6 +102,15 @@ class Physics():
         planey = self.height + self.ratio*(y)/(z+self.zero_z)
         return (planex, planey)
 
+    def get_face_vertex(self, faces, cord_3d):
+        face_tuple = ()
+        for face in faces:
+            face_vertex = []
+            for index in face:
+                face_vertex.append(tuple(cord_3d[index]))
+            face_tuple += tuple(face_vertex),
+        return face_tuple
+
     def get_2d(self, cord_3d):
         points = []
         for cord in cord_3d:
@@ -119,19 +128,9 @@ class Figure():
         self.colors = figure.colors
 
 
-    def get_face_vertex(self, faces):
-        face_tuple = ()
-        for face in faces:
-            face_vertex = []
-            for index in face:
-                face_vertex.append(tuple(self.cord_3d[index]))
-            face_tuple += tuple(face_vertex),
-        return face_tuple
-
-
     def update(self):
         self.cord_3d = self.physics.get_xyz(self.pos)
-        self.face_point_array = self.physics.get_face_vertex(self.faces)
+        self.face_point_array = self.physics.get_face_vertex(self.faces, self.cord_3d)
         self.cord_2d = self.physics.get_2d(self.cord_3d)
 
     def draw_polygons(self):
