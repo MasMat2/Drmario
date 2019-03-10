@@ -3,30 +3,29 @@ from figures import *
 
 class Physics():
 
-    def __init__(self):
-        self.counterx, self.countery, self.counterz = 0, 0, 0
-        self.width, self.height = [256,256]
+    counterx, countery, counterz = 0, 0, 0
+    width, height = [256,256]
 
-        # Set a counter for the automatic rotation of the cube
-        self.counterx, self.countery, self.counterz = 0, 0, 0
+    # Set a counter for the automatic rotation of the cube
+    counterx, countery, counterz = 0, 0, 0
 
-        # Set the amount of time the circle will take to turn around (seconds)
-        self.period = 8
-        self.speed = self.period*60
+    # Set the amount of time the circle will take to turn around (seconds)
+    period = 8
+    speed = period*60
 
-        # Event queue
-        self.events = set()
+    # Event queue
+    events = set()
 
-        # Camera pos x, y, z
-        self.cam = [0,0,0]
+    # Camera pos x, y, z
+    cam = [0,0,0]
 
-        self.left, self.right, self.up, self.down, self.front, self.back = [False for i in range(6)]
-        self.rot_right, self.rot_left, self.rot_up, self.rot_down, self.rot_barrell= [False for i in range(5)]
+    left, right, up, down, front, back = [False for i in range(6)]
+    rot_right, rot_left, rot_up, rot_down, rot_barrell= [False for i in range(5)]
 
-        m_side = 10
-        m_deep = 30
-        self.ratio = self.width/(m_side/m_deep)
-        self.zero_z = 50/((1/3)/8) + 50
+    m_side = 10
+    m_deep = 30
+    ratio = width/(m_side/m_deep)
+    zero_z = 50/((1/3)/8) + 50
 
     def input_events(self):
         for event in self.events:
@@ -44,6 +43,7 @@ class Physics():
             if event[1] == pygame.K_l: self.back = not self.back
 
         self.events = set()
+        # print([self.left, self.right, self.up, self.down, self.front, self.back,self.rot_right, self.rot_left, self.rot_up, self.rot_down, self.rot_barrell])
 
     def move_cam(self):
         self.input_events()
@@ -118,9 +118,8 @@ class Physics():
             points.append((x,y))
         return points
 
-class Figure():
-    def __init__(self, surface, figure, physics):
-        self.physics = physics
+class Figure(Physics):
+    def __init__(self, surface, figure):
         # Cubes coordinates x, y, z
         self.pos = figure.pos
         # Tell the program how to link each coordinate, this list is created based on self.pos
@@ -129,9 +128,9 @@ class Figure():
 
 
     def update(self):
-        self.cord_3d = self.physics.get_xyz(self.pos)
-        self.face_point_array = self.physics.get_face_vertex(self.faces, self.cord_3d)
-        self.cord_2d = self.physics.get_2d(self.cord_3d)
+        self.cord_3d = self.get_xyz(self.pos)
+        self.face_point_array = self.get_face_vertex(self.faces, self.cord_3d)
+        self.cord_2d = self.get_2d(self.cord_3d)
 
     def draw_polygons(self):
         depths = []
@@ -139,15 +138,14 @@ class Figure():
             depths.append([sum([self.cord_3d[point][cor]**2  for point in face for cor in range(3)])])
         return depths
 
-class Animation():
+class Animation(Physics):
 
-    def __init__(self, surface, physics, *args):
+    def __init__(self, surface, *args):
         self.surface = surface
         self.figures = args
-        self.physics = physics
 
     def update_all(self):
-        self.physics.move_cam()
+        self.move_cam()
         for figure in self.figures:
             figure.update()
 
@@ -190,7 +188,7 @@ class Animation():
 
 
 
-class Main:
+class Main():
 
     def __init__(self):
         self._running = True
@@ -203,18 +201,17 @@ class Main:
         self._running = True
         # Set the clock to keep a frame rate of 60 hertz
         self.clock = pygame.time.Clock()
-        self.physics = Physics()
-        a = Figure(self._display_surf, Piram, self.physics)
-        b = Figure(self._display_surf, Piram1, self.physics)
-        c =  Figure(self._display_surf, Cube, self.physics)
-        self.Animation = Animation(self._display_surf, self.physics, a, b, c)
+        a = Figure(self._display_surf, Piram)
+        b = Figure(self._display_surf, Piram1)
+        c =  Figure(self._display_surf, Cube)
+        self.Animation = Animation(self._display_surf, a, b, c)
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
             self._running = False
 
         if event.type in [pygame.KEYDOWN, pygame.KEYUP]:
-            self.physics.events.add((event.type, event.key))
+            Physics.events.add((event.type, event.key))
 
     def on_loop(self):
         self.Animation.update_all()
